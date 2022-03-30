@@ -18,7 +18,7 @@ Summary:	Structured Configuration Library
 Summary(pl.UTF-8):	Biblioteka ustrukturyzowanych plików konfiguracyjnych
 Name:		python-%{pypi_name}
 Version:	3.2.0
-Release:	7
+Release:	8
 License:	ZPL 2.1
 Group:		Libraries/Python
 Source0:	https://files.pythonhosted.org/packages/source/Z/%{pypi_name}/%{pypi_name}-%{version}.tar.gz
