@@ -2,58 +2,75 @@
 # - fix tests, needs: manuel and zope.testrunner
 #
 # Conditional build:
-%bcond_with	doc	# don't build doc
-%bcond_with	tests	# do not perform "make test"
+%bcond_with	doc	# Sphinx documentation
+%bcond_with	tests	# unit tests
 %bcond_without	python2 # CPython 2.x module
 %bcond_without	python3 # CPython 3.x module
 
-# NOTES:
-# - 'module' should match the Python import path (first component?)
-# - 'egg_name' should equal to Python egg name
-# - 'pypi_name' must match the Python Package Index name
 %define		module		ZConfig
-%define		egg_name	%{module}
-%define		pypi_name	%{module}
 Summary:	Structured Configuration Library
 Summary(pl.UTF-8):	Biblioteka ustrukturyzowanych plików konfiguracyjnych
-Name:		python-%{pypi_name}
+Name:		python-%{module}
 Version:	3.2.0
 Release:	8
 License:	ZPL 2.1
 Group:		Libraries/Python
-Source0:	https://files.pythonhosted.org/packages/source/Z/%{pypi_name}/%{pypi_name}-%{version}.tar.gz
+Source0:	https://files.pythonhosted.org/packages/source/Z/ZConfig/%{module}-%{version}.tar.gz
 # Source0-md5:	1f7206c3efaaed21e492153156107e89
 URL:		https://github.com/zopefoundation/ZConfig/
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
 %if %{with python2}
-BuildRequires:	python-modules
+BuildRequires:	python-modules >= 1:2.6
 BuildRequires:	python-setuptools
 %endif
 %if %{with python3}
-BuildRequires:	python3-modules
+BuildRequires:	python3-modules >= 1:3.2
 BuildRequires:	python3-setuptools
 %endif
-# when using /usr/bin/env or other in-place substitutions
-#BuildRequires:        sed >= 4.0
-# replace with other requires if defined in setup.py
-Requires:	python-modules
+Requires:	python-modules >= 1:2.6
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
+ZConfig is a configuration library intended for general use. It
+supports a hierarchical schema-driven configuration model that allows
+a schema to specify data conversion routines written in Python.
+ZConfig's model is very different from the model supported by the
+ConfigParser module found in Python's standard library, and is more
+suitable to configuration-intensive applications.
 
 %description -l pl.UTF-8
+ZConfig to biblioteka konfiguracji, przeznaczona do ogólnego użytku.
+Obsługuje hierarchiczny, oparty na schematach model konfiguracji,
+pozwalający na określanie w schematach napisanych w Pythonie procedur
+konwersji danych. Model ZConfig różni się znacząco od modelu
+obsługiwanego przez moduł ConfigParser z biblioteki standardowej
+Pythona i bardziej odpowiada aplikacjon korzystającym intensywnie z
+konfiguracji.
 
-%package -n python3-%{pypi_name}
-Summary:	-
-Summary(pl.UTF-8):	-
+%package -n python3-%{module}
+Summary:	Structured Configuration Library
+Summary(pl.UTF-8):	Biblioteka ustrukturyzowanych plików konfiguracyjnych
 Group:		Libraries/Python
-Requires:	python3-modules
+Requires:	python3-modules >= 1:3.2
 
-%description -n python3-%{pypi_name}
+%description -n python3-%{module}
+ZConfig is a configuration library intended for general use. It
+supports a hierarchical schema-driven configuration model that allows
+a schema to specify data conversion routines written in Python.
+ZConfig's model is very different from the model supported by the
+ConfigParser module found in Python's standard library, and is more
+suitable to configuration-intensive applications.
 
-%description -n python3-%{pypi_name} -l pl.UTF-8
+%description -n python3-%{module} -l pl.UTF-8
+ZConfig to biblioteka konfiguracji, przeznaczona do ogólnego użytku.
+Obsługuje hierarchiczny, oparty na schematach model konfiguracji,
+pozwalający na określanie w schematach napisanych w Pythonie procedur
+konwersji danych. Model ZConfig różni się znacząco od modelu
+obsługiwanego przez moduł ConfigParser z biblioteki standardowej
+Pythona i bardziej odpowiada aplikacjon korzystającym intensywnie z
+konfiguracji.
 
 %package apidocs
 Summary:	API documentation for Python %{module} module
@@ -67,7 +84,7 @@ API documentation for Pythona %{module} module.
 Dokumentacja API modułu Pythona %{module}.
 
 %prep
-%setup -q -n %{pypi_name}-%{version}
+%setup -q -n %{module}-%{version}
 
 %build
 %if %{with python2}
@@ -90,12 +107,6 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with python2}
 %py_install
 
-# when files are installed in other way that standard 'setup.py
-# they need to be (re-)compiled
-# change %{py_sitedir} to %{py_sitescriptdir} for 'noarch' packages!
-%py_ocomp $RPM_BUILD_ROOT%{py_sitedir}
-%py_comp $RPM_BUILD_ROOT%{py_sitedir}
-
 %py_postclean
 %endif
 
@@ -110,18 +121,18 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc CHANGES.rst README.rst
-%{py_sitescriptdir}/%{module}
-%{py_sitescriptdir}/%{egg_name}-%{version}-py*.egg-info
+%{py_sitescriptdir}/ZConfig
+%{py_sitescriptdir}/ZConfig-%{version}-py*.egg-info
 %endif
 
 %if %{with python3}
-%files -n python3-%{pypi_name}
+%files -n python3-%{module}
 %defattr(644,root,root,755)
 %doc CHANGES.rst README.rst
-%{py3_sitescriptdir}/%{module}
-%{py3_sitescriptdir}/%{egg_name}-%{version}-py*.egg-info
 %attr(755,root,root) %{_bindir}/zconfig
 %attr(755,root,root) %{_bindir}/zconfig_schema2html
+%{py3_sitescriptdir}/ZConfig
+%{py3_sitescriptdir}/ZConfig-%{version}-py*.egg-info
 %endif
 
 %if %{with doc}
