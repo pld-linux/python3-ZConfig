@@ -1,9 +1,7 @@
-# TODO:
-# - fix tests, needs: manuel and zope.testrunner
 #
 # Conditional build:
-%bcond_with	doc	# Sphinx documentation
-%bcond_with	tests	# unit tests
+%bcond_without	doc	# Sphinx documentation
+%bcond_without	tests	# unit tests
 %bcond_without	python2 # CPython 2.x module
 %bcond_without	python3 # CPython 3.x module
 
@@ -11,24 +9,41 @@
 Summary:	Structured Configuration Library
 Summary(pl.UTF-8):	Biblioteka ustrukturyzowanych plików konfiguracyjnych
 Name:		python-%{module}
-Version:	3.2.0
-Release:	8
-License:	ZPL 2.1
+# keep 3.x here for python2 support
+Version:	3.6.1
+Release:	1
+License:	ZPL v2.1
 Group:		Libraries/Python
 Source0:	https://files.pythonhosted.org/packages/source/Z/ZConfig/%{module}-%{version}.tar.gz
-# Source0-md5:	1f7206c3efaaed21e492153156107e89
+# Source0-md5:	ec207a5078c0b0d1e81d6d9b8c2208af
 URL:		https://github.com/zopefoundation/ZConfig/
 BuildRequires:	rpm-pythonprov
 BuildRequires:	rpmbuild(macros) >= 1.714
 %if %{with python2}
-BuildRequires:	python-modules >= 1:2.6
+BuildRequires:	python-modules >= 1:2.7
 BuildRequires:	python-setuptools
+%if %{with tests}
+BuildRequires:	python-docutils
+BuildRequires:	python-manuel
+BuildRequires:	python-zope.exceptions
+BuildRequires:	python-zope.testrunner
+%endif
 %endif
 %if %{with python3}
-BuildRequires:	python3-modules >= 1:3.2
+BuildRequires:	python3-modules >= 1:3.5
 BuildRequires:	python3-setuptools
+%if %{with tests}
+BuildRequires:	python3-docutils
+BuildRequires:	python3-manuel
+BuildRequires:	python3-zope.exceptions
+BuildRequires:	python3-zope.testrunner
 %endif
-Requires:	python-modules >= 1:2.6
+%endif
+%if %{with doc}
+BuildRequires:	python-sphinxcontrib-programoutput
+BuildRequires:	sphinx-pdg-2
+%endif
+Requires:	python-modules >= 1:2.7
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -53,7 +68,7 @@ konfiguracji.
 Summary:	Structured Configuration Library
 Summary(pl.UTF-8):	Biblioteka ustrukturyzowanych plików konfiguracyjnych
 Group:		Libraries/Python
-Requires:	python3-modules >= 1:3.2
+Requires:	python3-modules >= 1:3.5
 
 %description -n python3-%{module}
 ZConfig is a configuration library intended for general use. It
@@ -86,19 +101,42 @@ Dokumentacja API modułu Pythona %{module}.
 %prep
 %setup -q -n %{module}-%{version}
 
+mkdir -p stubs
+cat >stubs/zconfig <<EOF
+#!/bin/sh
+%{__python} $(pwd)/src/ZConfig/validator.py "\$@"
+EOF
+cat >stubs/zconfig_schema2html <<EOF
+#!/bin/sh
+%{__python} $(pwd)/src/ZConfig/schema2html.py "\$@" 
+EOF
+chmod 755 stubs/zconfig*
+
 %build
 %if %{with python2}
-%py_build %{?with_tests:test}
+%py_build
+
+%if %{with tests}
+LC_ALL=C.UTF-8 \
+PYTHONPATH=$(pwd)/src \
+zope-testrunner-2 --test-path=src -v
+%endif
 %endif
 
 %if %{with python3}
-%py3_build %{?with_tests:test}
+%py3_build
+
+%if %{with tests}
+PYTHONPATH=$(pwd)/src \
+zope-testrunner-3 --test-path=src -v
+%endif
 %endif
 
 %if %{with doc}
-cd docs
-%{__make} -j1 html
-rm -rf _build/html/_sources
+PATH=$(pwd)/stubs:$PATH \
+PYTHONPATH=$(pwd)/src \
+%{__make} -C docs html \
+	SPHINXBUILD=sphinx-build-2
 %endif
 
 %install
@@ -108,10 +146,14 @@ rm -rf $RPM_BUILD_ROOT
 %py_install
 
 %py_postclean
+
+%{__rm} -r $RPM_BUILD_ROOT%{py_sitescriptdir}/ZConfig/tests
 %endif
 
 %if %{with python3}
 %py3_install
+
+%{__rm} -r $RPM_BUILD_ROOT%{py3_sitescriptdir}/ZConfig/tests
 %endif
 
 %clean
@@ -120,7 +162,7 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with python2}
 %files
 %defattr(644,root,root,755)
-%doc CHANGES.rst README.rst
+%doc CHANGES.rst COPYRIGHT.txt LICENSE.txt README.rst
 %{py_sitescriptdir}/ZConfig
 %{py_sitescriptdir}/ZConfig-%{version}-py*.egg-info
 %endif
@@ -128,7 +170,7 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with python3}
 %files -n python3-%{module}
 %defattr(644,root,root,755)
-%doc CHANGES.rst README.rst
+%doc CHANGES.rst COPYRIGHT.txt LICENSE.txt README.rst
 %attr(755,root,root) %{_bindir}/zconfig
 %attr(755,root,root) %{_bindir}/zconfig_schema2html
 %{py3_sitescriptdir}/ZConfig
@@ -138,5 +180,5 @@ rm -rf $RPM_BUILD_ROOT
 %if %{with doc}
 %files apidocs
 %defattr(644,root,root,755)
-%doc docs/_build/html/*
+%doc docs/_build/html/{_static,*.html,*.js}
 %endif
